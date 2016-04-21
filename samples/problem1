@@ -1,0 +1,82 @@
+#!/bin/bash
+
+FILE="$1"
+if [[ $# == 0 || $# -gt 3 ]]			#bad number of arguments. prints usage and exit with non zero status
+then	
+	echo "Invalid number of arguments"
+	echo "Type \"$0 [--help|-h]\" for more information"
+	echo "Usage: $0 --create-file=<filename> [--no-prompt] [--verbose]"	
+	echo "exit 1"	
+	exit 1
+fi
+
+if [[ $# == 1 && ("$1" == "--help" || "$1" == "-h") ]]		#If ask for help, prints detailed help
+then
+	echo "This script writes the name of 50 states with one state per line in the file with filename passed in input argument"
+	echo "Usage: $0 --create-file=<filename> [--no-prompt] [--verbose]"
+	echo "filename - required argument. Please provide the name of the file to be written"
+	echo "--no-prompt - optional argument. By default, it will prompt the user if user attempts to overwrite the file"
+	echo "--verbose - optional argument. By default, it won't print any additional commands during the execution"
+	exit 0
+fi
+
+if [[ $# == 3 && ("$2" != "--no-prompt" || "$3" != "--verbose") ]]		#correct number of arguments but invalid syntax
+then
+	echo "Invalid syntax or invalid number of arguments. Did you mean --no-prompt or --verbose?"
+	echo "Type \"$0 [--help|-h]\" for more information"
+	echo "Usage: $0 --create-file=<filename> [--no-prompt] [--verbose]"	
+	echo "exit 2"	
+	exit 2
+fi
+
+if [[ $# == 2 && ("$2" != "--no-prompt" && "$2" != "--verbose")]]		#correct number of arguments but invalid syntax
+then
+	echo "Invalid syntax or invalid number of arguments. Did you mean --no-prompt or --verbose?"
+	echo "Type \"$0 [--help|-h]\" for more information"
+	echo "Usage: $0 --create-file=<filename> [--no-prompt] [--verbose]"	
+	echo "exit 2"	
+	exit 2
+fi
+
+if [[ -r "$FILE" ]]				#Check whether file exists and is readable
+then
+	if [[ "$3" == "--verbose" || "$2" == "--verbose" ]]  #As --no-prompt is also optional, it checks whether 2nd or 3rd argument is verbose.
+	then 
+		echo "File already exists"
+	fi 
+	if [[ "$2" != "--no-prompt" ]]			#If no-prompt is not set, prompt the user
+	then
+		let r=0
+		while [[ "$r" -ne 1 ]]			#waits for valid input (y or n)
+		do
+			echo "File exists. Overwrite (y/n)?"
+			read ans
+			if [[ $ans == "y" || $ans == "n" ]]			
+			then			
+				let r=1
+			fi
+		done
+		if [[ $ans == "n" ]]			#Don't overwrite file, remove file from this process and preserve old one
+		then
+			if [[ "$3" == "--verbose" || "$2" == "--verbose" ]]
+			then 
+				echo "File removed"
+			fi 
+			exit 0
+		fi
+	fi
+fi
+
+if [[ $ans == "y" || ! -r "$FILE" || (-r "$FILE" && "$2" == "--no-prompt") ]]   #If yes to overwrite or file does not exist or no-prompt is set
+then										#write file
+	if [[ ! -r "$FILE" ]]		
+	then	
+		if [[ "$3" == "--verbose" || "$2" == "--verbose" ]]
+		then 
+			echo "File created"	#create file if it did not exist
+		fi
+	fi
+	echo -e "Alabama\nAlaska\nArizona\nArkansas\nCalifornia\nColorado\nConnecticut\nDelaware\nFlorida\nGeorgia\nHawaii\nIdaho\nIllinois\nIndiana\nIowa\nKansas\nKentucky\nLouisiana\nMaine\nMaryland\nMassachusetts\nMichigan\nMinnesota\nMississippi\nMissouri\nMontana\nNebraska\nNevada\nNew Hampshire\nNew Jersey\nNew Mexico\nNew York\nNorth Carolina\nNorth Dakota\nOhio\nOklahoma\nOregon\nPennsylvania\nRhode Island\nSouth Carolina\nSouth Dakota\nTennessee\nTexas\nUtah\nVermont\nVirginia\nWashington\nWest Virginia\nWisconsin\nWyoming" > $1  #write into file
+
+fi
+exit 0
