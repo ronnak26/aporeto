@@ -1,0 +1,57 @@
+import sys
+from sys import exit
+import os.path
+
+if (len(sys.argv) > 4 or len(sys.argv) < 3) :	#checks for bad arguments
+
+	if (len(sys.argv) == 2 and (sys.argv[1] == "--help" or sys.argv[1] == "-h")) :			#Prints help if user asks
+		print "This script removes duplicate lines from input files and writes unique lines to new file"
+		print "Usage: python", sys.argv[0], "--file=<filename> --output=<output-filename> [-verbose]"
+		print "filename - required argument. Name of the input file with duplicate lines"
+		print "output-filename - required argument. Name of the output file to be written"
+		print "-verbose - optional argument. By default, it won't print any additional statements." 
+		exit(0)	
+
+	print "Type \"python",sys.argv[0], "[--help|-h]\" for more information"
+	print "Usage: python", sys.argv[0], "--file=<filename> --output=<output-filename> [-verbose]"
+	print "exit 1"
+	exit(1)
+
+if len(sys.argv) == 4:				#Checks for invalid syntax in the scenario of correct number of arguments
+	if sys.argv[3] != "-verbose" :
+		print "Invalid syntax. Did you mean -verbose?"
+		print "Type \"python",sys.argv[0], "[--help|-h]\" for more information"
+		print "Usage: python", sys.argv[0], "--file=<filename> --output=<output-filename> [-verbose]"
+		print "exit 2"
+		exit(2)
+
+new_lines = []
+valid = os.path.isfile(sys.argv[1])
+if valid != True :
+	print "File can't be read"
+	print "Try giving file name with valid extension"
+	print "Type \"python",sys.argv[0], "[--help|-h]\" for more information"
+	print "Usage: python", sys.argv[0], "--file=<filename> --output=<output-filename> [-verbose]"
+	print "exit 3"
+	exit(3)
+
+inputfile = open(sys.argv[1] , 'rU')		#opens file in rU mode which can detect \n, \r or \r\n 
+for line in inputfile :
+	duplicate = 0
+	for i in new_lines :
+		if line == i :			#compares lines from input files to unique lines saved in new_lines
+			duplicate = 1
+			break
+
+	if duplicate == 0:
+		if len(sys.argv) == 4:
+			print "Unique line found"
+		new_lines.append(line)
+
+outfile = open(sys.argv[2] , 'w')		#writes to output file
+for i in new_lines :
+	outfile.write(i)
+
+ 
+
+ 
