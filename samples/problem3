@@ -1,0 +1,90 @@
+package main
+import (
+	"fmt"
+	"strings"
+	"io/ioutil"
+	"os"
+	"net/http"
+	"time"
+	"strconv"
+)
+
+func main() {
+	if len(os.Args) != 2 {				//Checks for bad commandline arguments
+		fmt.Printf("Invalid number of arguments\n")
+		fmt.Printf("Type \"%s [-help|-h]\" for more information\n",os.Args[0])
+		fmt.Printf("Usage: %s --url=<comma-separated-url>\n",os.Args[0])
+		fmt.Printf("exit 1\n")
+		os.Exit(1)
+	}
+
+	if os.Args[1] == "-help" || os.Args[1] == "-h" {	//Prints detailed help if asked by user
+		fmt.Printf("This script calculates the word frequency count of the text found in one or more urls concurrently\n") 
+		fmt.Printf("Usage: %s --url=<comma-separated-url>\n",os.Args[0])
+		fmt.Printf("comma-separated-url : Required Argument. Please provide the list of url separated by commas\n")
+		os.Exit(0)	
+	}
+
+	start := time.Now()		//starts the timer to count time for whole code
+	ch := make(chan string)		//makes a string channel
+	var c = 0
+
+	for _,url := range strings.Split(string(os.Args[1]), ",") {	//splits multiple urls using ',' and runs concurrent fetch function 
+		go fetch(url, ch, c)
+		c = c+1							//keeps track on the number of url
+	}
+	
+	for i := range strings.Split(string(os.Args[1]), ",") {
+		fmt.Println(i)	
+		fmt.Println(<-ch)		//Receives from channel
+	}
+	fmt.Printf("%.2fs Time Elapsed \n",time.Since(start).Seconds())  //Prints total time of code
+}
+
+func getname(i int) string{			//Forms .txt filename (url0.txt, url1.txt...) using url number with the help of c
+	s := []string{"url"}
+	x := strconv.Itoa(i)
+	s = append(s,x)
+	s = append(s,".txt")
+	return strings.Join(s,"")
+}	
+
+func fetch(url string, ch chan<-string, i int) {		//This function concurrently executes and calculate word frequency 
+	start := time.Now()					//Time for this particular url
+	resp, err := http.Get(url)
+	if err != nil {
+		ch <- fmt.Sprint(err)
+		return
+	}
+	
+	b, err := ioutil.ReadAll(resp.Body)			//read url text
+	resp.Body.Close()
+	if err != nil {
+		ch <- fmt.Sprintf("while reading %s: %v",url, err)
+		return
+	}
+
+ 	fi,_ := os.Create(getname(i))
+	fi.Write([]byte("url:"))
+	w := []byte(url)
+	fi.Write(w)
+
+	counts := make(map[string]int)				//hash map of string to int to create word frequency table
+	f := func(c rune) bool {				//Returns true if any of the given below char is input (all possible delimiters)
+		return c == ',' || c == '.' || c == '/' || c == '<' || c == '>' || c == '?' || c == ';' || c == '\'' || c == ':' || c == '"' || c == '[' || c == ']' || c == '{' || c == '}' || c == '(' || c == ')' || c == '-' || c == '=' || c == '_' || c == '+'|| c == '*' || c == '&' || c == '^' || c == '%' || c == '$' || c == '#' || c == '@' || c == '!' || c == '`' || c == '~' || c == '\n' || c == ' '
+    	}
+	for _, word := range strings.FieldsFunc(string(b), f) {
+		counts[word]++
+	}
+	for word, n := range counts {				//writes to file
+		fi.Write([]byte("\n"))
+		fi.Write([]byte(word))
+		fi.Write([]byte(":"))
+		count := strconv.Itoa(n)
+		fi.Write([]byte(count))
+	}
+	secs := time.Since(start).Seconds()
+	ch <- fmt.Sprintf("%.2fs %s",secs,url)			//Sends url and time required for this url on channel 
+}
+
+
